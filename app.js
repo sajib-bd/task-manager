@@ -7,6 +7,8 @@ import RateLimit from "express-rate-limit";
 
 import connect from "./config/connect.js";
 import { UserRouter } from "./router/userRouter.js";
+import TaskRouter from "./router/tasKRouter.js";
+
 
 dotenv.config();
 const app = express();
@@ -23,7 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 const PORT = process.env.PORT || 4000;
 
 app.use("/api/v1", UserRouter);
-app.use("/api/v1/task", UserRouter);
+app.use("/api/v1/task", TaskRouter);
 
 app.listen(PORT, () => {
   connect();

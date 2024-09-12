@@ -4,7 +4,6 @@ import validator from "validator";
 import TokenGenerate from "../utils/token.js";
 import jwt from "jsonwebtoken";
 import { EmailVerifyLink, EmailCode } from "../utils/email.js";
-import { response } from "express";
 
 export const SingUp = async (req, res) => {
   try {
@@ -40,12 +39,12 @@ export const SingUp = async (req, res) => {
 
     if (existingUser) {
       if (existingUser.email === email) {
-        return res.status(404).json({
+        return res.status(405).json({
           message: "This Email Address already exists",
         });
       }
       if (existingUser.mobile === mobile) {
-        return res.status(404).json({
+        return res.status(405).json({
           message: "This Mobile Number already exists",
         });
       }
@@ -59,7 +58,7 @@ export const SingUp = async (req, res) => {
     }
 
     if (password.length < 6 || password.length > 20) {
-      return res.status(403).json({
+      return res.status(400).json({
         message: "Password should be at least 6 and less than 20 characters",
       });
     }
@@ -99,21 +98,21 @@ export const Login = async (req, res) => {
     }
 
     if ((email.trim() == "", password.trim() == "")) {
-      return res.status(403).json({
+      return res.status(400).json({
         message: "Fields cannot be empty",
       });
     }
 
     const findUser = await User.findOne({ email: email });
     if (!findUser) {
-      return res.status(403).json({
+      return res.status(204).json({
         message: "this email does not have an account",
       });
     }
 
     const MatchPassword = await bcrypt.compare(password, findUser.password);
     if (!MatchPassword) {
-      return res.status(403).json({
+      return res.status(400).json({
         message: "Passwords do not match",
       });
     }
@@ -136,19 +135,19 @@ export const VerifyEmailLink = async (req, res) => {
   try {
     const email = req.params.email;
     if (!email) {
-      return res.status(403).json({
+      return res.status(400).json({
         message: "Please Provide Email Address",
       });
     }
 
     const findEmail = await User.findOne({ email: email });
     if (!findEmail) {
-      return res.status(403).json({
+      return res.status(204).json({
         message: "this email does not have an account",
       });
     }
     if (findEmail?.verify) {
-      return res.status(403).json({
+      return res.status(400).json({
         message: "Sorry, Your email address is already verify",
       });
     }
@@ -164,7 +163,7 @@ export const VerifyEmailLink = async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({
-      message: "Something went wrong",
+      message: "An Error has occurred while processing your request",
     });
   }
 };
@@ -174,7 +173,7 @@ export const VerifyEmail = async (req, res) => {
     const token = req.params.token;
 
     if (!token) {
-      return res.status(401).json({
+      return res.status(404).json({
         message: "Please Provide Token",
       });
     }
@@ -197,7 +196,7 @@ export const VerifyEmail = async (req, res) => {
     );
 
     if (!updated) {
-      return res.status(401).json({
+      return res.status(400).json({
         message: "Verifying Failed",
       });
     }
@@ -208,7 +207,13 @@ export const VerifyEmail = async (req, res) => {
   } catch (error) {
     if (error.name === "TokenExpiredError") {
       return res.status(401).json({
-        message: "Token has expired. Please request a new verification email.",
+        message: "Token has expired.",
+      });
+    }
+
+    if (error.name === "JsonWebTokenError") {
+      return res.status(401).json({
+        message: "Invalid token. Please login again.",
       });
     }
 
@@ -222,14 +227,14 @@ export const SendEmailCode = async (req, res) => {
   try {
     const email = req.params.email;
     if (!email) {
-      return res.status(403).json({
+      return res.status(404).json({
         message: "Please Provide Email Address",
       });
     }
 
     const find = await User.findOne({ email: email });
     if (!find) {
-      return res.status(403).json({
+      return res.status(204).json({
         message: "No Account Found With This Email Address",
       });
     }
@@ -271,26 +276,26 @@ export const PasswordReset = async (req, res) => {
     }
 
     if (code == "" || password == "") {
-      return res.status(403).json({
+      return res.status(404).json({
         message: "Please Provide OTP and New Password",
       });
     }
     const find = await User.findOne({ email: email });
 
     if (!find) {
-      return res.status(403).json({
+      return res.status(204).json({
         message: "Sorry, User does not exist",
       });
     }
 
     if (find.otp.code != code) {
-      return res.status(403).json({
+      return res.status(401).json({
         message: "This OTP Wrong. Please Provide Correct OTP",
       });
     }
 
     if (find.otp.expired < new Date().getTime()) {
-      return res.status(403).json({
+      return res.status(401).json({
         message: "Code Expired",
       });
     }
@@ -298,7 +303,7 @@ export const PasswordReset = async (req, res) => {
     const PassMatchCheck = await bcrypt.compare(password, find.password);
 
     if (PassMatchCheck) {
-      return res.status(403).json({
+      return res.status(400).json({
         message:
           "you account currently has this password. please enter new password",
       });
@@ -335,17 +340,16 @@ export const userFind = async (req, res) => {
   try {
     const id = req.headers.id;
     if (!id) {
-      return res.status(500).json({
+      return res.status(404).json({
         message: "UserId not found",
       });
     }
 
     const userInfo = await User.findById(id, {
       _id: 0,
-      password: 0,
-      verify: 0,
-      createdAt: 0,
-      updatedAt: 0,
+      name: 1,
+      mobile: 1,
+      email: 1,
     });
     return res.status(200).json({
       status: "success",
@@ -371,7 +375,7 @@ export const UpdateName = async (req, res) => {
     }
 
     if (name.length < 5) {
-      return res.status(500).json({
+      return res.status(400).json({
         message: "You Have To Enter 5 Character Name",
       });
     }

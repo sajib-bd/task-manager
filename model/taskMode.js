@@ -4,23 +4,24 @@ const TaskSchema = mongoose.Schema(
   {
     clientId: {
       type: mongoose.Schema.Types.ObjectId,
-      require: true,
+      required: true,
     },
     title: {
-      type: "String",
+      type: String,
       required: true,
     },
     description: {
-      type: "String",
+      type: String,
       required: true,
     },
     status: {
-      type: "String",
+      type: String,
       required: true,
+      default: "new",
     },
   },
   { timestamps: true, versionKey: false }
 );
 
-const Task = mongoose.model("task", TaskSchema);
+const Task = mongoose.model("Task", TaskSchema);
 export default Task;
