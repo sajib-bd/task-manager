@@ -12,7 +12,7 @@ export const EmailVerifyLink = async (email, verifyUrl) => {
   });
 
   const host = process.env.DOMAIN_HOST;
-  const verificationLink = `${host}/api/v1/auth/email-verify/${verifyUrl}`;
+  const verificationLink = `${host}/api/v1/user/email-verify/${verifyUrl}`;
 
   const mailOptions = {
     from: ` Task Manager ${process.env.MAIL_USERNAME}`,
