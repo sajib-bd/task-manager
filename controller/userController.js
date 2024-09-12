@@ -117,6 +117,12 @@ export const Login = async (req, res) => {
       });
     }
 
+    if (!findUser.verify) {
+      return res.status(401).json({
+        message: "Your need to do email verification",
+      });
+    }
+
     const Token = await TokenGenerate(findUser._id);
 
     return res.status(200).json({
