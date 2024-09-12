@@ -33,6 +33,13 @@ export const SingUp = async (req, res) => {
       });
     }
 
+    if (!mobileRegex.test(mobile.trim())) {
+      return res.status(400).json({
+        message:
+          "Invalid mobile number format. It must be 11 digits long and start with one of the specified prefixes.",
+      });
+    }
+
     const existingUser = await User.findOne({
       $or: [{ email: email }, { mobile: mobile }],
     });
@@ -48,13 +55,6 @@ export const SingUp = async (req, res) => {
           message: "This Mobile Number already exists",
         });
       }
-    }
-
-    if (!mobileRegex.test(mobile.trim())) {
-      return res.status(400).json({
-        message:
-          "Invalid mobile number format. It must be 11 digits long and start with one of the specified prefixes.",
-      });
     }
 
     if (password.length < 6 || password.length > 20) {
@@ -405,7 +405,179 @@ export const UpdateName = async (req, res) => {
     }
 
     return res.status(200).json({
-      message: "Update successful",
+      status: "success",
+      message: "Name Update successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "An error occurred while processing your request.",
+    });
+  }
+};
+
+export const Update = async (req, res) => {
+  try {
+    const { otp } = req.params;
+    const userId = req.headers.id;
+    const { email, mobile } = req.body;
+
+    if (!email && !mobile) {
+      return res.status(404).json({
+        message: "Email Address or Number Field is required",
+      });
+    }
+
+    if (email === "" && number === "") {
+      return res.status(400).json({
+        message: "Either email or number should be changed",
+      });
+    }
+
+    const mobileRegex = /(^(\+88|0088)?(01){1}[3456789]{1}(\d){8})$/;
+    if (email) {
+      if (!validator.isEmail(email)) {
+        return res.status(400).json({
+          message: "Invalid email format",
+        });
+      }
+    }
+
+    if (!mobileRegex.test(mobile.trim())) {
+      return res.status(400).json({
+        message:
+          "Invalid mobile number format. It must be 11 digits long and start with one of the specified prefixes.",
+      });
+    }
+
+    const userFind = await User.findOne({ _id: userId });
+
+    if (!userFind) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    if (email == userFind.email && number == userFind.number) {
+      return res.status(400).json({
+        message: "your haven't changed anything",
+      });
+    }
+
+    const existing = await User.findOne({
+      $or: [{ email: email, mobile: mobile }],
+    });
+
+    if (existing) {
+      return res.status(400).json({
+        message: "This Email or Number already exists",
+      });
+    }
+
+    if (!otp) {
+      return res.status(404).json({
+        message: "to change email or number you need to provide OTP",
+      });
+    }
+
+    if (otp != userFind.otp.code) {
+      return res.status(404).json({
+        message: "you entered the wrong OTP",
+      });
+    }
+
+    if (userFind.otp.expired < new Date().getTime()) {
+      return res.status(401).json({
+        message: "OTP Expired",
+      });
+    }
+
+    const update = await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          email: email,
+          mobile: mobile,
+          "otp.expired": new Date().getTime(),
+        },
+      },
+      { new: true }
+    );
+
+    if (!update) {
+      return res.status(404).json({
+        message: "Update Failed",
+      });
+    }
+
+    return res.status(200).json({
+      status: "success",
+      message: "Update Success",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "An error occurred while processing your request.",
+    });
+  }
+};
+
+export const updatePassword = async (req, res) => {
+  try {
+    const userId = req.headers.id;
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({
+        message: "All Fields are required",
+      });
+    }
+
+    if (oldPassword == "" || newPassword == "") {
+      return res.status(400).json({
+        message: "Field cannot be empty",
+      });
+    }
+
+    const findUser = await User.findById(userId);
+
+    if (!findUser) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    const MatchPassword = await bcrypt.compare(oldPassword, findUser.password);
+    if (!MatchPassword) {
+      return res.status(404).json({
+        message: "you entered the wrong password",
+      });
+    }
+
+    if (oldPassword == newPassword) {
+      return res.status(400).json({
+        message: "This Password Already Have Your Account",
+      });
+    }
+
+    const update = await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          password: await bcrypt.hash(newPassword, 11),
+        },
+      },
+      { new: true }
+    );
+
+    if (!update) {
+      return res.status(404).json({
+        message: "Update Failed",
+      });
+    }
+
+    return res.status(200).json({
+      status: "success",
+      message: "Password updated successfully",
     });
   } catch (error) {
     res.status(500).json({
