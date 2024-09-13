@@ -148,7 +148,7 @@ export const VerifyEmailLink = async (req, res) => {
 
     const findEmail = await User.findOne({ email: email });
     if (!findEmail) {
-      return res.status(204).json({
+      return res.status(404).json({
         message: "this email does not have an account",
       });
     }
@@ -282,14 +282,14 @@ export const PasswordReset = async (req, res) => {
     }
 
     if (code == "" || password == "") {
-      return res.status(404).json({
+      return res.status(400).json({
         message: "Please Provide OTP and New Password",
       });
     }
     const find = await User.findOne({ email: email });
 
     if (!find) {
-      return res.status(204).json({
+      return res.status(404).json({
         message: "Sorry, User does not exist",
       });
     }
@@ -433,7 +433,7 @@ export const Update = async (req, res) => {
       });
     }
 
-    if (email === "" && number === "") {
+    if (email === "" && mobile === "") {
       return res.status(400).json({
         message: "Either email or number should be changed",
       });

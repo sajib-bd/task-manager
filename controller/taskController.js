@@ -25,6 +25,12 @@ export const TaskCreate = async (req, res) => {
       { title: 1, description: 1, status: 1 }
     );
 
+    if (!createTask) {
+      return res.status(404).json({
+        message: "Task Create Failed",
+      });
+    }
+
     return res.status(200).json({
       status: 200,
       message: "Task created successfully",
@@ -131,8 +137,6 @@ export const TaskUpdate = async (req, res) => {
       });
     }
 
-
-
     if (String(findTask.clientId) != String(userId)) {
       return res.status(403).json({
         message: "Sorry, it's  not your task",
@@ -176,7 +180,7 @@ export const TaskStatusUpdate = async (req, res) => {
     const { taskId, status } = req.params;
     const userId = req.headers.id;
     if (!taskId || !status) {
-      return res.status({
+      return res.status(400).json({
         message: "task id and status are required",
       });
     }
@@ -297,7 +301,6 @@ export const CountTask = async (req, res) => {
       data: TaskCount,
     });
   } catch (error) {
-    console.error(error); // Use console.error for error logging
     res.status(500).json({
       message: "An error occurred while processing your request.",
     });
