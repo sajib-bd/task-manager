@@ -10,6 +10,7 @@ import {
   UpdateName,
   Update,
   updatePassword,
+  updateProfile,
 } from "../controller/userController.js";
 import EmailCheck from "../middleware/verifyCheck.js";
 import protect from "../middleware/protect.js";
@@ -24,5 +25,6 @@ UserRouter.post("/user/emailCode/:email", SendEmailCode);
 UserRouter.put("/user/passwordReset/:email", PasswordReset);
 UserRouter.get("/user/find", protect, userFind);
 UserRouter.put("/user/update/name", protect, UpdateName);
+UserRouter.put("/user/update/profile", protect, updateProfile);
 UserRouter.put("/user/update/info/:otp", protect, Update);
 UserRouter.put("/user/update/password", protect, updatePassword);

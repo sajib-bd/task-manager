@@ -25,6 +25,9 @@ const userSchema = mongoose.Schema(
       required: true,
       trim: true,
     },
+    profile: {
+      type: String,
+    },
     verify: {
       type: Boolean,
       default: false,
@@ -32,7 +35,7 @@ const userSchema = mongoose.Schema(
     otp: {
       code: {
         type: String,
-        default: 0,
+        default: "",
       },
       expired: {
         type: Number,

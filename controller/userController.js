@@ -4,6 +4,8 @@ import validator from "validator";
 import TokenGenerate from "../utils/token.js";
 import jwt from "jsonwebtoken";
 import { EmailVerifyLink, EmailCode } from "../utils/email.js";
+import OTPGenerate from "../utils/OTPgenerate.js";
+import imageUpload from "../utils/multer.js";
 
 export const SingUp = async (req, res) => {
   try {
@@ -105,7 +107,7 @@ export const Login = async (req, res) => {
 
     const findUser = await User.findOne({ email: email });
     if (!findUser) {
-      return res.status(204).json({
+      return res.status(400).json({
         message: "this email does not have an account",
       });
     }
@@ -123,14 +125,14 @@ export const Login = async (req, res) => {
       });
     }
 
-    const Token = await TokenGenerate(findUser._id);
+    await TokenGenerate(findUser._id, res);
 
     return res.status(200).json({
       status: "success",
       message: "Login successful",
-      token: Token,
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({
       message: "An error occurred while processing your request.",
     });
@@ -245,10 +247,21 @@ export const SendEmailCode = async (req, res) => {
       });
     }
 
-    const randomCode = Math.floor(100000 + Math.random() * 900000);
+    const OTP = OTPGenerate(6);
+    if (find.otp.expired - 180000 > new Date().getTime()) {
+      const minuteCat = find.otp.expired - 180000;
+      const time = minuteCat - new Date().getTime();
+      const showTime = time / 1000;
+      return res.status(404).json({
+        message: `OTP  has already send to you email. please try again ${showTime.toFixed(
+          0
+        )} seconds later`,
+      });
+    }
+    const sendCode = await EmailCode(email, OTP);
     const update = await User.findByIdAndUpdate(find._id, {
       $set: {
-        "otp.code": randomCode,
+        "otp.code": OTP,
         "otp.expired": new Date().getTime() + 5 * 60 * 1000,
       },
     });
@@ -258,7 +271,6 @@ export const SendEmailCode = async (req, res) => {
         message: "Sorry, Something Wrong",
       });
     }
-    const sendCode = await EmailCode(email, randomCode);
 
     return res.status(200).json({
       message: "Mail sent successfully Please check your mail box",
@@ -588,6 +600,58 @@ export const updatePassword = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: "An error occurred while processing your request.",
+    });
+  }
+};
+
+export const updateProfile = async (req, res) => {
+  try {
+    const { id } = req.headers;
+
+    // fileUpload Array
+
+    // imageUpload(id, "profile").array("profile", 2)(req, res, async (err) => {
+    //   if (err) {
+    //     return res.status(400).json({ message: "Profile Upload Failed" });
+    //   }
+
+    //   const profileFilenames = req.files.map((file) => file.filename);
+
+    //   const update = await User.findByIdAndUpdate(
+    //     id,
+    //     {
+    //       profile: profileFilenames.map((filename) => ({ url: filename })),
+    //     },
+    //     {
+    //       new: true,
+    //     }
+    //   );
+
+    // file Upload single
+    imageUpload(id, "profile").single("profile")(req, res, async (err) => {
+      if (err) {
+        return res.status(400).json({ message: "Profile Upload Failed" });
+      }
+
+      const update = await User.findByIdAndUpdate(
+        id,
+        {
+          profile: req.file.filename,
+        },
+        {
+          new: true,
+        }
+      );
+
+      res.status(200).json({
+        message: "Profile updated successfully",
+        filePath: req.file.filename,
+      });
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Internal Server Error",
     });
   }
 };
