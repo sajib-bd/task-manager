@@ -93,6 +93,15 @@ export const SingUp = async (req, res) => {
 export const Login = async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    const alreadyLoginCheck = req.cookies.token;
+    if (alreadyLoginCheck) {
+      return res.status(400).json({
+        status: "login",
+        message: "Already logged in",
+      });
+    }
+
     if (!email || !password) {
       return res.status(403).json({
         message: "All fields are required",
