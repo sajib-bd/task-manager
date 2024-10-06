@@ -24,9 +24,10 @@ const limit = rateLimit({
 });
 
 app.use(limit);
+const allowedOrigins = process.env.FRONTEND_URLS.split(",");
 app.use(
   cors({
-    origin: ["https://react.sajib.xyz/", "http://localhost:5173"],
+    origin: allowedOrigins,
     credentials: true,
   })
 );
