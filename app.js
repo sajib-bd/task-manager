@@ -26,10 +26,11 @@ const limit = rateLimit({
 app.use(limit);
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: ["https://react.sajib.xyz/", "http://localhost:5173"],
     credentials: true,
   })
 );
+
 app.use(cookieParser());
 app.use(xssClean());
 app.use(mongodbSanitize());
