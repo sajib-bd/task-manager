@@ -16,14 +16,11 @@ export const TaskCreate = async (req, res) => {
       });
     }
 
-    const createTask = await Task.create(
-      {
-        clientId: req.headers.id,
-        title: title.trim(),
-        description: description.trim(),
-      },
-      { title: 1, description: 1, status: 1 }
-    );
+    const createTask = await Task.create({
+      clientId: req.headers.id,
+      title: title.trim(),
+      description: description.trim(),
+    });
 
     if (!createTask) {
       return res.status(404).json({

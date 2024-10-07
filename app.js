@@ -32,6 +32,7 @@ app.use(
   })
 );
 
+app.use(browserAgentMiddleware);
 app.use(cookieParser());
 app.use(xssClean());
 app.use(mongodbSanitize());

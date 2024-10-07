@@ -148,6 +148,24 @@ export const Login = async (req, res) => {
   }
 };
 
+export const Logout = async (req, res) => {
+  try {
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      path: "/",
+    });
+    return res.status(200).json({
+      message: "Logout Successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "An error occurred while logging out",
+    });
+  }
+};
+
 export const VerifyEmailLink = async (req, res) => {
   try {
     const email = req.params.email;
